@@ -81,20 +81,11 @@ def get_music_tool_node():
 
 # This node is responsible for verifying the customer's identity based on their input.
 def verify_info(state: State, config: RunnableConfig):
-    """Verify the customer's account by parsing their input and matching it with the database."""
+    """Verify the user's current session by parsing their input and matching it with the database."""
 
     # Check if a customer_id is already present in the state.
     # If it is, verification is complete, and the node does nothing (passes).
-    if state.get("customer_id") is None:
-        # System instructions for the verification LLM.
-        system_instructions = """You are a music store agent, where you are trying to verify the customer identity 
-        as the first step of the customer support process. 
-        Only after their account is verified, you would be able to support them on resolving the issue. 
-        In order to verify their identity, one of their customer ID, email, or phone number needs to be provided.
-        If the customer provides their phone number, do not change the format of the provided phone number. Example, if the user provides the phone number "+1 12-3456-7890", the "identifier" should be "+1 12-3456-7890".
-        If the customer has not provided the information yet, please ask them for it.
-        If they have provided the identifier but cannot be found, please ask them to revise it."""
-
+    if state.get("user_id") is None:
         # Get the most recent user message from the state.
         user_input = state["messages"][-1]
 
@@ -113,30 +104,22 @@ def verify_info(state: State, config: RunnableConfig):
         )
 
         # Extract the identified identifier string.
-        identifier = parsed_info.identifier
-        identifier = "+55 (12) 3923-5555"
+        user_id = parsed_info.identifier
+        print("UserID", user_id)
+        print(type(user_id))
+        print(len(user_id))
 
-        customer_id = ""  # Initialize customer_id as an empty string.
-        # Attempt to find the customer ID in the database using the helper function.
-        if identifier:
-            customer_id = get_customer_id_from_identifier(identifier)
-
-        # If a valid customer_id was found,
-        if customer_id != "":
-            # Create a system message confirming verification.
-            intent_message = SystemMessage(
-                content=f"Thank you for providing your information! I was able to verify your account with customer id {customer_id}."
-            )
-            # Update the state with the found customer_id and the confirmation message.
-            return {"customer_id": customer_id, "messages": [intent_message]}
-        # If no customer_id was found or provided,
-        else:
+        while user_id == "":
             # Invoke the base LLM with instructions to prompt the user for their identifier or revise it.
             response = llm.invoke(
-                [SystemMessage(content=system_instructions)] + state["messages"]
+                [SystemMessage(content=structured_system_prompt)] + state["messages"]
             )
             # Update the state with the LLM's response (the prompt for user input).
-            return {"messages": [response]}
+
+        intent_message = SystemMessage(
+            content=f"Thank you for providing your information! I was able to verify your account with user id {user_id}."
+        )
+        return {"user_id": user_id, "messages": [intent_message]}
 
     else:
         # If `customer_id` is already in state, this node does nothing.
@@ -161,9 +144,9 @@ def human_input(state: State, config: RunnableConfig):
 # Define the `load_memory` node function.
 # This node loads a user's long-term memory (music preferences) into the current state.
 def load_memory(state: State, config: RunnableConfig, store: BaseStore):
-    """Loads music preferences from users, if available."""
+    """Loads generated code from coding agent, if available."""
 
-    user_id = state["customer_id"]  # Get the current customer ID from the state.
+    user_id = state["user_id"]  # Get the current customer ID from the state.
     namespace = (
         "memory_profile",
         user_id,
@@ -191,8 +174,9 @@ def create_memory(state: State, config: RunnableConfig, store: BaseStore):
         temperature=0,
     )
 
+    print("State", state)
     user_id = str(
-        state["customer_id"]
+        state["user_id"]
     )  # Get the customer ID from the current state (convert to string).
     namespace = (
         "memory_profile",
@@ -209,7 +193,7 @@ def create_memory(state: State, config: RunnableConfig, store: BaseStore):
             existing_memory.value
         )  # Get the dictionary containing the UserProfile instance.
         # Format existing music preferences into a string for the prompt.
-        formatted_memory = f"Music Preferences: {', '.join(existing_memory_dict.get('memory').music_preferences or [])}"  # Access the UserProfile object via 'memory' key
+        formatted_memory = f"Code: {existing_memory_dict.get('code')}"
 
     # Create a SystemMessage with the formatted prompt, injecting the full conversation history
     # and the existing memory profile.
@@ -229,7 +213,7 @@ def create_memory(state: State, config: RunnableConfig, store: BaseStore):
 
     # Store the updated memory profile back into the `InMemoryStore`.
     # We wrap `updated_memory` in a dictionary under the key 'memory' for consistency in access.
-    store.put(namespace, key, {"memory": updated_memory})
+    store.put(namespace, key, {"code": updated_memory})
 
 
 def python_language_rag():

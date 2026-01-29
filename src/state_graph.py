@@ -10,6 +10,7 @@ from langgraph.store.memory import (
     InMemoryStore,
 )  # For long-term memory (storing user preferences)
 
+from nodes import create_memory, verify_info
 from state import State
 from supervisor import get_python_documentation_supervisor
 from utils import show_graph
@@ -24,9 +25,9 @@ def get_python_documentation_state_graph(plot_graph=False):
     multi_agent_final = StateGraph(State)
 
     # Add all necessary nodes to the graph.
-    # multi_agent_final.add_node(
-    #     "verify_info", verify_info
-    # )  # Node for customer verification
+    multi_agent_final.add_node(
+        "verify_info", verify_info
+    )  # Node for customer verification
     # multi_agent_final.add_node(
     #     "human_input", human_input
     # )  # Node for human-in-the-loop interruption
@@ -36,13 +37,13 @@ def get_python_documentation_state_graph(plot_graph=False):
     multi_agent_final.add_node(
         "supervisor", supervisor_prebuilt
     )  # Supervisor for routing to sub-agents
-    # multi_agent_final.add_node(
-    #     "create_memory", create_memory
-    # )  # Node for saving/updating user long-term memory
+    multi_agent_final.add_node(
+        "create_memory", create_memory
+    )  # Node for saving/updating user long-term memory
 
     # Define the initial entry point: all interactions start with verification.
-    # multi_agent_final.add_edge(START, "verify_info")
-    multi_agent_final.add_edge(START, "supervisor")
+    multi_agent_final.add_edge(START, "verify_info")
+    multi_agent_final.add_edge("verify_info", "supervisor")
 
     # Define the conditional routing after `verify_info`.
     # If verification is successful, proceed to load memory. Otherwise, prompt for human input.
@@ -66,7 +67,8 @@ def get_python_documentation_state_graph(plot_graph=False):
 
     # The graph ends after memory has been updated.
     # multi_agent_final.add_edge("create_memory", END)
-    multi_agent_final.add_edge("supervisor", END)
+    multi_agent_final.add_edge("supervisor", "create_memory")
+    multi_agent_final.add_edge("create_memory", END)
 
     # Compile the entire, sophisticated graph.
     multi_agent_final_graph = multi_agent_final.compile(
