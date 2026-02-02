@@ -18,7 +18,6 @@ from langgraph.types import (
 
 from prompts import (
     generate_create_memory_prompt,
-    generate_music_assistant_prompt,
     generate_structured_system_prompt,
 )
 from schemas import UserInput, UserProfile
@@ -103,13 +102,19 @@ def verify_info(state: State, config: RunnableConfig):
             [SystemMessage(content=structured_system_prompt)] + [user_input]
         )
 
-        # Extract the identified identifier string.
         user_id = parsed_info.identifier
+        # Extract the identified identifier string.
         print("UserID", user_id)
-        print(type(user_id))
-        print(len(user_id))
 
         while user_id == "":
+            print("Enter your user_id: ")
+            # user_input = state["messages"][-1]
+            user_input = interrupt("User: ")
+            result = multi_agent_final_graph.invoke(
+                {"messages": [HumanMessage(content=user_input)]}, config=config
+            )
+
+            user_id = parsed_info.identifier
             # Invoke the base LLM with instructions to prompt the user for their identifier or revise it.
             response = llm.invoke(
                 [SystemMessage(content=structured_system_prompt)] + state["messages"]
@@ -174,7 +179,6 @@ def create_memory(state: State, config: RunnableConfig, store: BaseStore):
         temperature=0,
     )
 
-    print("State", state)
     user_id = str(
         state["user_id"]
     )  # Get the customer ID from the current state (convert to string).

@@ -16,81 +16,11 @@ from langgraph.store.memory import (
 )  # For long-term memory (storing user preferences)
 
 from prompts import (
-    generate_invoice_subagent_prompt,
-    generate_music_assistant_prompt,
     generate_python_coding_prompt,
     generate_python_language_documentation_prompt,
     generate_python_library_documentation_prompt,
 )
 from state import State
-from tools import (
-    check_for_songs,
-    get_albums_by_artist,
-    get_employee_by_invoice_and_customer,
-    get_invoices_by_customer_sorted_by_date,
-    get_invoices_sorted_by_unit_price,
-    get_songs_by_genre,
-    get_tracks_by_artist,
-)
-
-
-def get_invoice_information_agent():
-    llm = ChatOllama(
-        model="qwen3",
-        temperature=0,
-    )
-    invoice_tools = [
-        get_invoices_by_customer_sorted_by_date,
-        get_invoices_sorted_by_unit_price,
-        get_employee_by_invoice_and_customer,
-    ]
-
-    invoice_subagent_prompt = generate_invoice_subagent_prompt()
-
-    in_memory_store = InMemoryStore()
-    checkpointer = MemorySaver()
-
-    invoice_information_subagent = create_react_agent(
-        llm,  # The language model to use for reasoning
-        tools=invoice_tools,  # The list of tools available to this agent
-        name="invoice_information_subagent",  # A unique name for this agent within the graph
-        prompt=invoice_subagent_prompt,  # The system prompt for this agent's persona and instructions
-        state_schema=State,  # The shared state schema for the graph
-        checkpointer=checkpointer,  # The checkpointer for short-term (thread-level) memory
-        store=in_memory_store,  # The in-memory store for long-term user data
-    )
-
-    return invoice_information_subagent
-
-
-def get_music_catalog_agent():
-    llm = ChatOllama(
-        model="qwen3",
-        temperature=0,
-    )
-    music_tools = [
-        get_albums_by_artist,
-        get_tracks_by_artist,
-        get_songs_by_genre,
-        check_for_songs,
-    ]
-
-    music_assistant_prompt = generate_music_assistant_prompt()
-
-    in_memory_store = InMemoryStore()
-    checkpointer = MemorySaver()
-
-    music_catalog_subagent = create_react_agent(
-        llm,  # The language model to use for reasoning
-        tools=music_tools,  # The list of tools available to this agent
-        name="music_catalog_subagent",  # A unique name for this agent within the graph
-        prompt=music_assistant_prompt,  # The system prompt for this agent's persona and instructions
-        state_schema=State,  # The shared state schema for the graph
-        checkpointer=checkpointer,  # The checkpointer for short-term (thread-level) memory
-        store=in_memory_store,  # The in-memory store for long-term user data
-    )
-
-    return music_catalog_subagent
 
 
 def get_python_language_agent():
