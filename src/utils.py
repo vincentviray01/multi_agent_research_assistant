@@ -6,11 +6,6 @@ from langchain_community.document_loaders import WebBaseLoader
 from langchain_ollama import OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-# Import the embedding model from Together AI
-# NOTE: Adjust this import to use a different embedding model
-
-# Initialize the embedding model using Alibaba's GTE ModernBERT base model
-# This model is used to convert text into vector representations for similarity search
 EMBEDDING_MODEL = OllamaEmbeddings(model="nomic-embed-text:v1.5")
 
 
@@ -278,40 +273,25 @@ def show_graph(graph, xray=False):
     """
 
     try:
-        # Try the default mermaid renderer first (uses mermaid.ink service)
-        # This is the fastest option but may fail due to network issues or service unavailability
         return Image(graph.get_graph(xray=xray).draw_mermaid_png(proxies=None))
     except Exception as e:
-        # If the default renderer fails, fall back to pyppeteer
-        # pyppeteer uses a local headless Chrome instance to render the diagram
         print(f"Default renderer failed ({e}), falling back to pyppeteer...")
 
-        # Apply nest_asyncio to handle async operations in Jupyter environments
-        # This is necessary because pyppeteer uses async operations
         import nest_asyncio
 
         nest_asyncio.apply()
 
-        # Import the MermaidDrawMethod enum for specifying the draw method
         from langchain_core.runnables.graph import MermaidDrawMethod
 
-        # Use pyppeteer as the drawing method (local rendering)
         return Image(
             graph.get_graph().draw_mermaid_png(draw_method=MermaidDrawMethod.PYPPETEER)
         )
 
 
-# Helper function to format user memory (music preferences) into a readable string.
 def format_user_memory(user_data):
-    """Formats music preferences from users, if available."""
-    profile = user_data["memory"]  # Access the 'memory' key from the stored dictionary
-    result = ""  # Initialize an empty string for the formatted result
+    code = user_data["code"]
+    result = ""
+    if hasattr(code, ""):
+        result += f"Code: {code}"
 
-    # Check if the profile object has a 'music_preferences' attribute and if it's not empty.
-    if hasattr(profile, "music_preferences") and profile.music_preferences:
-        # If preferences exist, join them into a comma-separated string.
-        result += f"Music Preferences: {', '.join(profile.music_preferences)}"
-
-    return (
-        result.strip()
-    )  # Return the formatted string, removing any leading/trailing whitespace.
+    return result.strip()

@@ -7,13 +7,13 @@ from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langgraph.checkpoint.memory import (
     MemorySaver,
-)  # For short-term memory (thread-level state persistence)
+)
 from langgraph.prebuilt import (
     create_react_agent,
 )
 from langgraph.store.memory import (
     InMemoryStore,
-)  # For long-term memory (storing user preferences)
+)
 
 from prompts import (
     generate_python_coding_prompt,
@@ -46,20 +46,12 @@ def get_python_language_agent():
 
     docs = [WebBaseLoader(url).load() for url in PYTHON_LANGUAGE_DOCS]
 
-    # print(docs[0][0].page_content.strip()[:1000])
-
     docs_list = [item for sublist in docs for item in sublist]
 
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=100, chunk_overlap=50
     )
     doc_splits = text_splitter.split_documents(docs_list)
-
-    # print(doc_splits[0].page_content.strip())
-
-    # vector_store = InMemoryVectorStore.from_documents(
-    #     documents=doc_splits, embedding=EMBEDDING_MODEL
-    # )
 
     embedding_dim = len(EMBEDDING_MODEL.embed_query("hello world"))
     index = faiss.IndexFlatL2(embedding_dim)
@@ -86,13 +78,13 @@ def get_python_language_agent():
     checkpointer = MemorySaver()
 
     python_language_subagent = create_react_agent(
-        llm,  # The language model to use for reasoning
-        tools=[retriever_tool],  # The list of tools available to this agent
-        name="python_language_agent",  # A unique name for this agent within the graph
-        prompt=python_library_prompt,  # The system prompt for this agent's persona and instructions
-        state_schema=State,  # The shared state schema for the graph
-        checkpointer=checkpointer,  # The checkpointer for short-term (thread-level) memory
-        store=in_memory_store,  # The in-memory store for long-term user data
+        llm,
+        tools=[retriever_tool],
+        name="python_language_agent",
+        prompt=python_library_prompt,
+        state_schema=State,
+        checkpointer=checkpointer,
+        store=in_memory_store,
     )
 
     return python_language_subagent
@@ -220,20 +212,12 @@ def get_python_library_agent():
 
     docs = [WebBaseLoader(url).load() for url in PYTHON_LIBRARY_DOCS]
 
-    # print(docs[0][0].page_content.strip()[:1000])
-
     docs_list = [item for sublist in docs for item in sublist]
 
     text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
         chunk_size=100, chunk_overlap=50
     )
     doc_splits = text_splitter.split_documents(docs_list)
-
-    # print(doc_splits[0].page_content.strip())
-
-    # vector_store = InMemoryVectorStore.from_documents(
-    #     documents=doc_splits, embedding=EMBEDDING_MODEL
-    # )
 
     embedding_dim = len(EMBEDDING_MODEL.embed_query("hello world"))
     index = faiss.IndexFlatL2(embedding_dim)
@@ -259,13 +243,13 @@ def get_python_library_agent():
     checkpointer = MemorySaver()
 
     python_library_subagent = create_react_agent(
-        llm,  # The language model to use for reasoning
-        tools=[retriever_tool],  # The list of tools available to this agent
-        name="python_library_agent",  # A unique name for this agent within the graph
-        prompt=python_library_prompt,  # The system prompt for this agent's persona and instructions
-        state_schema=State,  # The shared state schema for the graph
-        checkpointer=checkpointer,  # The checkpointer for short-term (thread-level) memory
-        store=in_memory_store,  # The in-memory store for long-term user data
+        llm,
+        tools=[retriever_tool],
+        name="python_library_agent",
+        prompt=python_library_prompt,
+        state_schema=State,
+        checkpointer=checkpointer,
+        store=in_memory_store,
     )
 
     return python_library_subagent
@@ -283,13 +267,13 @@ def get_python_coding_agent():
     checkpointer = MemorySaver()
 
     python_language_subagent = create_react_agent(
-        llm,  # The language model to use for reasoning
-        tools=[],  # The list of tools available to this agent
-        name="python_coding_agent",  # A unique name for this agent within the graph
-        prompt=python_coding_prompt,  # The system prompt for this agent's persona and instructions
-        state_schema=State,  # The shared state schema for the graph
-        checkpointer=checkpointer,  # The checkpointer for short-term (thread-level) memory
-        store=in_memory_store,  # The in-memory store for long-term user data
+        llm,
+        tools=[],
+        name="python_coding_agent",
+        prompt=python_coding_prompt,
+        state_schema=State,
+        checkpointer=checkpointer,
+        store=in_memory_store,
     )
 
     return python_language_subagent
